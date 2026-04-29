@@ -1,0 +1,146 @@
+<!-- admin/user_detail.html -->
+{% extends "base_admin.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>用户详情 - {{ user.username }}</h2>
+    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">返回列表</a>
+</div>
+
+<div class="row">
+    <!-- 基本信息 -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>基本信息</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="30%">学号/工号：</th>
+                        <td>{{ user.school_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>用户名：</th>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>邮箱：</th>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>专业：</th>
+                        <td>{{ user.major or '未设置' }}</td>
+                    </tr>
+                    <tr>
+                        <th>角色：</th>
+                        <td>
+                            <span class="badge {% if user.role == 'admin' %}bg-danger{% else %}bg-primary{% endif %}">
+                                {{ '管理员' if user.role == 'admin' else '普通用户' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>账户状态：</th>
+                        <td>
+                            <span class="badge {% if user.account_status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ '正常' if user.account_status == 'active' else '冻结' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>注册时间：</th>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 信誉分信息 -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>信誉分信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="display-4 {% if user.credit_score >= 120 %}text-success{% elif user.credit_score >= 80 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ user.credit_score }}
+                    </div>
+                    <div class="text-muted">当前信誉分</div>
+                </div>
+
+                <table class="table table-sm">
+                    <tr>
+                        <th>信誉等级：</th>
+                        <td>
+                            {% set level_name, level_config = user.get_credit_level() %}
+                            <span class="badge bg-info">{{ level_name }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>可借数量：</th>
+                        <td>{{ user.get_borrow_limit() }} 本</td>
+                    </tr>
+                    <tr>
+                        <th>借阅期限：</th>
+                        <td>{{ user.get_borrow_period() }} 天</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 借阅记录 -->
+<div class="card">
+    <div class="card-header">
+        <h5>借阅记录</h5>
+    </div>
+    <div class="card-body">
+        {% if borrows %}
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>图书</th>
+                        <th>作者</th>
+                        <th>借阅日期</th>
+                        <th>应还日期</th>
+                        <th>状态</th>
+                        <th>评分</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for borrow in borrows %}
+                    <tr>
+                        <td>{{ borrow.book.title }}</td>
+                        <td>{{ borrow.book.author }}</td>
+                        <td>{{ borrow.borrow_date.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ borrow.due_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="badge {% if borrow.status == 'borrowed' %}bg-primary{% elif borrow.status == 'returned' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ borrow.status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if borrow.rating %}
+                            {% for i in range(1, 6) %}
+                            <i class="bi bi-star{% if i <= borrow.rating %}-fill text-warning{% endif %}" style="font-size: 0.8rem;"></i>
+                            {% endfor %}
+                            {% else %}
+                            <span class="text-muted">未评价</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center">暂无借阅记录</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

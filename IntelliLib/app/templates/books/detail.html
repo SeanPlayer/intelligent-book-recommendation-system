@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        {% if book.cover_image %}
+        <img src="{{ book.cover_image }}" class="img-fluid rounded" alt="{{ book.title }}">
+        {% else %}
+        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;">
+            <span class="text-muted">暂无封面</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <h2>{{ book.title }}</h2>
+        <p class="text-muted">作者: {{ book.author }}</p>
+
+        <div class="row mb-3">
+            <div class="col-sm-6">
+                <strong>分类:</strong> {{ book.category_display }}
+                {% if book.subcategory %} - {{ book.subcategory }}{% endif %}
+            </div>
+            <div class="col-sm-6">
+                <strong>出版社:</strong> {{ book.publisher or '未知' }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-sm-6">
+                <strong>ISBN:</strong> {{ book.isbn or '未知' }}
+            </div>
+            <div class="col-sm-6">
+                <strong>出版日期:</strong> {{ book.publish_date or '未知' }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <strong>标签:</strong>
+            {% if book.tags %}
+                {% for tag in book.tags.split(',') %}
+                <span class="badge bg-light text-dark me-1">{{ tag.strip() }}</span>
+                {% endfor %}
+            {% else %}
+                <span class="text-muted">无</span>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <strong>库存状态:</strong>
+            <span class="badge {% if book.available_copies > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                {{ book.available_copies }}/{{ book.total_copies }} 可借
+            </span>
+        </div>
+
+        <div class="mb-4">
+            <h5>图书描述</h5>
+            <p>{{ book.description or '暂无描述' }}</p>
+        </div>
+
+        <!-- 操作按钮区域 - 根据角色显示不同内容 -->
+        <div class="d-grid gap-2 d-md-flex">
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_admin() %}
+                    <!-- 管理员视图 -->
+                    <div class="alert alert-info w-100">
+                        <strong>管理员视图</strong><br>
+                        您正在以管理员身份浏览图书详情。<br>
+                        <a href="{{ url_for('admin.edit_book', book_id=book.id) }}" class="btn btn-sm btn-outline-primary mt-2">编辑图书信息</a>
+                    </div>
+                {% else %}
+                    <!-- 普通用户视图 -->
+                    {% if book.available_copies > 0 %}
+                    <button class="btn btn-primary me-md-2" id="borrowBtn" onclick="borrowBook({{ book.id }})">
+                        借阅图书
+                    </button>
+                    <div id="borrowStatus" class="align-self-center" style="display: none;">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span>借阅中...</span>
+                    </div>
+                    {% else %}
+                    <button class="btn btn-secondary me-md-2" disabled>暂无库存</button>
+                    {% endif %}
+                    <!-- 心愿单按钮（动态显示状态） -->
+                    {% if current_user.is_in_wishlist(book.id) %}
+                    <button class="btn btn-danger" id="wishlist-btn-{{ book.id }}" disabled>
+                        <i class="bi bi-heart-fill"></i> 已加入心愿单
+                    </button>
+                    {% else %}
+                    <button class="btn btn-outline-danger" id="wishlist-btn-{{ book.id }}"
+                            onclick="addToWishlist({{ book.id }}, event)">
+                        <i class="bi bi-heart"></i> 加入心愿单
+                    </button>
+                    {% endif %}
+            {% endif %}
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary me-md-2">登录后借阅</a>
+            {% endif %}
+            <a href="{{ url_for('main.book_list') }}" class="btn btn-outline-secondary">返回列表</a>
+        </div>
+    </div>
+
+    <!-- 相似图书推荐区域 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="mb-3"><i class="bi bi-collection"></i> 相似图书推荐</h4>
+            <div id="similar-books" class="row">
+                <!-- 这里将由 JavaScript 动态填充 -->
+                <div class="col-12 text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+function borrowBook(bookId) {
+    console.log('开始借阅图书:', bookId);
+
+    // 显示加载状态
+    const borrowBtn = document.getElementById('borrowBtn');
+    const borrowStatus = document.getElementById('borrowStatus');
+    borrowBtn.style.display = 'none';
+    borrowStatus.style.display = 'block';
+
+    // 发送借阅请求
+    fetch(`/books/${bookId}/borrow`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('借阅成功！' + (data.message || ''));
+            setTimeout(() => {
+                window.location.href = "{{ url_for('main.my_borrows') }}";
+            }, 1000);
+        } else {
+            alert(data.message || '借阅失败');
+            resetBorrowButton();
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('网络错误，请重试');
+        resetBorrowButton();
+    });
+}
+
+function resetBorrowButton() {
+    const borrowBtn = document.getElementById('borrowBtn');
+    const borrowStatus = document.getElementById('borrowStatus');
+    if (borrowBtn && borrowStatus) {
+        borrowBtn.style.display = 'block';
+        borrowStatus.style.display = 'none';
+    }
+}
+
+// 加载相似图书
+function loadSimilarBooks() {
+    fetch(`/api/books/{{ book.id }}/similar`)
+        .then(response => response.json())
+        .then(books => {
+            const container = document.getElementById('similar-books');
+            if (books.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center py-3"><p class="text-muted">暂无相似图书推荐</p></div>';
+                return;
+            }
+            let html = '';
+            books.forEach(book => {
+                html += `
+                <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                    <div class="card h-100">
+                        ${book.cover_image ?
+                            `<img src="${book.cover_image}" class="card-img-top" alt="${book.title}" style="height: 120px; object-fit: cover;">` :
+                            `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                <i class="bi bi-book" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>`
+                        }
+                        <div class="card-body p-2">
+                            <h6 class="card-title small text-truncate" title="${book.title}">${book.title}</h6>
+                            <p class="card-text text-muted small mb-1">${book.author}</p>
+                            <span class="badge bg-secondary">${book.category_display}</span>
+                        </div>
+                        <div class="card-footer p-2">
+                            <a href="/books/${book.id}" class="btn btn-sm btn-outline-primary w-100">查看</a>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('加载相似图书失败:', error);
+            document.getElementById('similar-books').innerHTML = '<div class="col-12 text-center py-3 text-danger">加载失败</div>';
+        });
+}
+
+// 页面加载完成后调用
+document.addEventListener('DOMContentLoaded', loadSimilarBooks);
+
+
+
+// 添加到心愿单函数（与用户中心的一致）
+function addToWishlist(bookId) {
+    fetch(`/wishlist/add/${bookId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // 更新按钮状态
+            const button = document.getElementById(`wishlist-btn-${bookId}`);
+            button.innerHTML = '<i class="bi bi-heart-fill"></i> 已加入心愿单';
+            button.classList.remove('btn-outline-danger');
+            button.classList.add('btn-danger');
+            button.disabled = true;
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('添加失败');
+    });
+}
+</script>
+{% endblock %}
+
+

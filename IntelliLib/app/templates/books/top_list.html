@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">{{ title }}</h2>
+
+    <div class="list-group">
+        {% for book in books %}
+        <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+            <span class="d-flex align-items-center">
+                <span class="badge bg-secondary me-3" style="min-width: 2.5em;">{{ (pagination.page-1)*per_page + loop.index }}</span>
+                <span>
+                    <strong>{{ book.title }}</strong>
+                    <br><small class="text-muted">{{ book.author }}</small>
+                </span>
+            </span>
+            <span class="badge bg-warning rounded-pill">
+                {% if book.average_rating %}
+                    {{ book.average_rating|round(1) }}
+                {% else %}
+                    暂无
+                {% endif %}
+            </span>
+        </a>
+        {% else %}
+        <div class="alert alert-info">暂无图书</div>
+        {% endfor %}
+    </div>
+
+    <!-- 分页导航 -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.top_books', type=type, page=pagination.prev_num) }}">上一页</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">上一页</span></li>
+            {% endif %}
+
+            {% for p in pagination.iter_pages() %}
+                {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.top_books', type=type, page=p) }}">{{ p }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('main.top_books', type=type, page=pagination.next_num) }}">下一页</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">下一页</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

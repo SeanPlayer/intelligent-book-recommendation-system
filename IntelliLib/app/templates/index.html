@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- 未登录状态：系统介绍 -->
+{% if not current_user.is_authenticated %}
+<div class="row align-items-center min-vh-75">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-4">IntelliLib 智能图书馆</h1>
+        <p class="lead mb-4">
+            基于人工智能技术的下一代图书馆管理系统，为您提供个性化的图书发现和借阅体验。
+        </p>
+        <div class="d-grid gap-2 d-md-flex">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+                立即注册
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg px-4">
+                用户登录
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <div class="hero-image-placeholder">
+            <i class="bi bi-book" style="font-size: 8rem; color: #6c757d;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- 系统特性介绍 -->
+<div class="row mt-5 pt-5">
+    <div class="col-12 text-center mb-5">
+        <h2>为什么选择 IntelliLib？</h2>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-search" style="font-size: 2rem; color: #0d6efd;"></i>
+                </div>
+                <h5>智能搜索</h5>
+                <p class="text-muted">强大的全文搜索功能，快速定位您需要的图书资源</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-graph-up" style="font-size: 2rem; color: #198754;"></i>
+                </div>
+                <h5>个性化推荐</h5>
+                <p class="text-muted">基于您的阅读历史和兴趣，智能推荐可能喜欢的书籍</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <div class="feature-icon mb-3">
+                    <i class="bi bi-lightning" style="font-size: 2rem; color: #ffc107;"></i>
+                </div>
+                <h5>高效管理</h5>
+                <p class="text-muted">在线借阅、归还，实时库存管理，提升图书馆运营效率</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 未登录：热门图书精选 -->
+{% if hot_books %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-4"><i class="bi bi-fire"></i> 热门图书精选</h3>
+    </div>
+    {% for book in hot_books[:4] %}
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image }}" class="card-img-top" alt="{{ book.title }}" style="height: 180px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                <i class="bi bi-book" style="font-size: 3rem; color: #6c757d;"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h6 class="card-title text-truncate">{{ book.title }}</h6>
+                <p class="card-text text-muted small">{{ book.author }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-primary">{{ book.borrow_count }}人借阅</span>
+                    <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="btn btn-sm btn-outline-primary">详情</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+
+<!-- 未登录：热门榜单 -->
+{% include '_ranking.html' %}
+
+
+<!-- 已登录普通用户状态 -->
+{% elif not current_user.is_admin() %}
+<div class="text-center py-5">
+    <h1 class="display-5 fw-bold mb-4">欢迎回来，{{ current_user.username }}！</h1>
+    <p class="lead mb-4">准备好探索我们的图书收藏了吗？</p>
+    <div class="d-grid gap-2 d-md-flex justify-content-center">
+        <a href="{{ url_for('main.book_list') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+            开始浏览图书
+        </a>
+        <a href="{{ url_for('main.my_borrows') }}" class="btn btn-outline-secondary btn-lg px-4">
+            我的借阅记录
+        </a>
+    </div>
+
+    <!-- ================ 首页推荐模块 ================ -->
+    <!-- 登录用户：热门榜单（与未登录共享） -->
+    {% include '_ranking.html' %}
+    {% if recommendations and recommendations|length > 0 %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="section-header d-flex justify-content-between align-items-center mb-4">
+                <h3 class="position-relative d-inline-block">
+                    为您推荐
+                    <span class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: linear-gradient(90deg, #007bff, transparent);"></span>
+                </h3>
+                <button class="btn btn-sm btn-outline-primary" id="refresh-home-recommend">换一批</button>
+            </div>
+        </div>
+        {% if recommendations and recommendations|length > 0 %}
+        <div id="home-recommend-container" class="row">
+            {% for book in recommendations %}
+                {% include '_book_card.html' %}
+            {% endfor %}
+        </div>
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">暂无推荐，先去浏览图书吧～</p>
+                <a href="{{ url_for('main.book_list') }}" class="btn btn-primary">浏览图书</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 查看更多推荐链接（保留） -->
+    <div class="text-center mt-2 mb-4">
+        <a href="{{ url_for('main.recommendations') }}" class="btn btn-outline-primary">
+            查看更多推荐 <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 已登录管理员状态（在用户界面） -->
+{% else %}
+<div class="text-center py-5">
+    <h1 class="display-5 fw-bold mb-4">管理员 {{ current_user.username }}</h1>
+    <p class="lead mb-4">您正在以管理员身份访问用户界面</p>
+    <div class="d-grid gap-2 d-md-flex justify-content-center">
+        <a href="{{ url_for('admin.manage_books') }}" class="btn btn-primary btn-lg px-4 me-md-2">
+            进入管理后台
+        </a>
+        <a href="{{ url_for('main.book_list') }}" class="btn btn-outline-secondary btn-lg px-4">
+            浏览图书（用户视角）
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// 刷新首页推荐
+function refreshHomeRecommend() {
+    const container = document.getElementById('home-recommend-container');
+    if (!container) return;
+
+    // 获取当前显示的图书ID
+    const cards = container.querySelectorAll('.book-card');
+    const excludeIds = Array.from(cards).map(card => card.dataset.bookId).filter(id => id);
+
+    // 刷新厌恶
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    fetch('/api/action/refresh-negative', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? {'X-CSRFToken': csrfToken} : {}) // 有CSRF Token才传
+        },
+        body: JSON.stringify({ book_ids: excludeIds })
+    }).catch(err => console.warn('上报刷新厌恶行为失败:', err));
+
+    // 构建 URL，请求新的推荐列表
+    const url = new URL('/api/recommend/personalized/html', window.location.origin);
+    url.searchParams.set('limit', 4);
+    excludeIds.forEach(id => url.searchParams.append('exclude_ids', id));
+
+    fetch(url)
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP错误：${res.status}`);
+            return res.text();
+        })
+        .then(html => {
+            if (html.trim() === '') {
+                container.innerHTML = '<div class="col-12 text-center py-4"><p class="text-muted">暂无更多推荐</p></div>';
+            } else {
+                container.innerHTML = html;
+            }
+        })
+        .catch(err => console.error('刷新推荐失败:', err));
+}
+
+// 绑定点击事件（保留）
+document.getElementById('refresh-home-recommend')?.addEventListener('click', refreshHomeRecommend);
+</script>
+
+{% endblock %}

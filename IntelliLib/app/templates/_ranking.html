@@ -1,0 +1,92 @@
+<!-- 三个榜单：本周热门、经典好书、新书速递 -->
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-fire"></i> 本周热门</h5>
+                <a href="{{ url_for('main.top_books', type='hot') }}" class="btn btn-sm btn-light">查看更多 <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for book in weekly_hot %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2" style="min-width: 2em;">{{ loop.index }}</span>
+                        <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="text-decoration-none text-truncate" style="max-width: 160px;" title="{{ book.title }}">
+                            {{ book.title }}
+                        </a>
+                    </span>
+                    <span class="badge bg-warning rounded-pill">
+                        {% if book.average_rating %}
+                            {{ book.average_rating|round(1) }}
+                        {% else %}
+                            暂无
+                        {% endif %}
+                    </span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">暂无热门图书</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-star"></i> 经典好书</h5>
+                <a href="{{ url_for('main.top_books', type='classic') }}" class="btn btn-sm btn-light">查看更多 <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for book in classic_books %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2" style="min-width: 2em;">{{ loop.index }}</span>
+                        <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="text-decoration-none text-truncate" style="max-width: 160px;" title="{{ book.title }}">
+                            {{ book.title }}
+                        </a>
+                    </span>
+                    <span class="badge bg-warning rounded-pill">
+                        {% if book.average_rating %}
+                            {{ book.average_rating|round(1) }}
+                        {% else %}
+                            暂无
+                        {% endif %}
+                    </span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">暂无经典图书</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock"></i> 新书速递</h5>
+                <a href="{{ url_for('main.top_books', type='new') }}" class="btn btn-sm btn-light">查看更多 <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for book in new_books %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="d-flex align-items-center">
+                        <span class="badge bg-secondary me-2" style="min-width: 2em;">{{ loop.index }}</span>
+                        <a href="{{ url_for('main.book_detail', book_id=book.id) }}" class="text-decoration-none text-truncate" style="max-width: 160px;" title="{{ book.title }}">
+                            {{ book.title }}
+                        </a>
+                    </span>
+                    <span class="badge bg-warning rounded-pill">
+                        {% if book.average_rating %}
+                            {{ book.average_rating|round(1) }}
+                        {% else %}
+                            暂无
+                        {% endif %}
+                    </span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">暂无新书上架</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>

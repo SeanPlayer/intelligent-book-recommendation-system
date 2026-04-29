@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 form-container">
+        <h2>添加图书</h2>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.isbn.label(class="form-label") }}
+                        {{ form.isbn(class="form-control") }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.total_copies.label(class="form-label") }}
+                        {{ form.total_copies(class="form-control") }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control", placeholder="请输入书名") }}
+                {% for error in form.title.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.author.label(class="form-label") }}
+                {{ form.author(class="form-control", placeholder="请输入作者") }}
+                {% for error in form.author.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.publisher.label(class="form-label") }}
+                        {{ form.publisher(class="form-control") }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.publish_date.label(class="form-label") }}
+                        {{ form.publish_date(class="form-control", placeholder="格式：2023-01-01") }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.category.label(class="form-label") }}
+                        {{ form.category(class="form-control", placeholder="如：计算机科学") }}
+                        {% for error in form.category.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.subcategory.label(class="form-label") }}
+                        {{ form.subcategory(class="form-control", placeholder="如：编程语言") }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                {{ form.tags.label(class="form-label") }}
+                {{ form.tags(class="form-control", placeholder="多个标签用逗号分隔，如：Python,编程,入门") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.description.label(class="form-label") }}
+                {{ form.description(class="form-control", rows="4", placeholder="请输入图书描述") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.cover_image.label(class="form-label") }}
+                {{ form.cover_image(class="form-control", placeholder="封面图片URL") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.manage_books') }}" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

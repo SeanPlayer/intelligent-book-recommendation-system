@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- 用户信息概览 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <div class="avatar-circle bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <span class="text-white fs-4">{{ current_user.username[:2] }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h3 class="mb-1">{{ current_user.username }}</h3>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-person-badge"></i> {{ current_user.school_id }} |
+                                <i class="bi bi-mortarboard"></i> {{ current_user.major }}
+                            </p>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <div class="info-box">
+                                        <span class="info-box-label">信誉分</span>
+                                        <span class="info-box-value text-primary">{{ current_user.credit_score }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="info-box">
+                                        <span class="info-box-label">可借数量</span>
+                                        <span class="info-box-value text-success">{{ current_user.get_borrow_limit() }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="info-box">
+                                        <span class="info-box-label">当前借阅</span>
+                                        <span class="info-box-value text-info">{{ current_borrows|length }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="info-box">
+                                        <span class="info-box-label">心愿单</span>
+                                        <span class="info-box-value text-warning">{{ wishlist_count }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：当前借阅 -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 当前借阅</h5>
+                    <a href="{{ url_for('main.my_borrows') }}" class="btn btn-sm btn-outline-primary">查看全部</a>
+                </div>
+                <div class="card-body">
+                    {% if current_borrows %}
+                    <div class="list-group">
+                        {% for borrow in current_borrows[:5] %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ borrow.book.title }}</h6>
+                                <small class="text-{% if borrow.is_overdue %}danger{% else %}success{% endif %}">
+                                    {{ borrow.status_display }}
+                                </small>
+                            </div>
+                            <p class="mb-1 small">作者：{{ borrow.book.author }}</p>
+                            <div class="d-flex justify-content-between">
+                                <small>到期：{{ borrow.due_date.strftime('%Y-%m-%d') }}</small>
+                                <div>
+                                    {% if borrow.can_renew %}
+                                    <button class="btn btn-sm btn-outline-primary" onclick="renewBook({{ borrow.id }})">
+                                        续借
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-success" onclick="returnBook({{ borrow.id }})">
+                                        归还
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-book text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">暂无借阅记录</p>
+                        <a href="{{ url_for('main.book_list') }}" class="btn btn-primary">去借书</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：心愿单 -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-heart"></i> 我的心愿单</h5>
+                    <a href="{{ url_for('main.my_wishlist') }}" class="btn btn-sm btn-outline-primary">查看全部</a>
+                </div>
+                <div class="card-body">
+                    {% if wishlist_items %}
+                    <div class="list-group">
+                        <!-- 心愿单循环部分 -->
+                        {% for book in wishlist_items[:5] %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if book.title %}
+                                        {{ book.title }}
+                                    {% else %}
+                                        未知图书
+                                    {% endif %}
+                                </h6>
+                                {% if book and book.available_copies is defined %}
+                                <span class="badge {% if book.available_copies > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ book.available_copies }}/{{ book.total_copies }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning">数据异常</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1 small">作者：{{ book.author if book.author else '未知' }}</p>
+                            <div class="d-flex justify-content-between">
+                                <small>{{ book.category if book.category else '未分类' }}</small>
+                                <div>
+                                    <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
+                                       class="btn btn-sm btn-primary">
+                                        查看详情
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist({{ book.id }})">
+                                        移除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-heart text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">心愿单是空的</p>
+                        <a href="{{ url_for('main.book_list') }}" class="btn btn-primary">去发现图书</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近借阅历史 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-check"></i> 最近借阅历史</h5>
+                    <a href="{{ url_for('main.my_borrows') }}" class="btn btn-sm btn-outline-primary">
+                        查看全部
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_borrows %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>图书名称</th>
+                                    <th>借阅时间</th>
+                                    <th>归还时间</th>
+                                    <th>状态</th>
+                                    <th>评分</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for borrow in recent_borrows %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('main.book_detail', book_id=borrow.book.id) }}"
+                                           class="text-decoration-none">
+                                            {{ borrow.book.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ borrow.borrow_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if borrow.return_date %}
+                                        {{ borrow.return_date.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                        <span class="text-muted">未归还</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if borrow.status == 'returned' %}bg-success{% elif borrow.is_overdue %}bg-danger{% else %}bg-info{% endif %}">
+                                            {{ borrow.status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if borrow.rating %}
+                                        {{ '★' * borrow.rating }}{{ '☆' * (5-borrow.rating) }}
+                                        {% else %}
+                                        <span class="text-muted">未评分</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-3">暂无借阅历史</p>
+                        <a href="{{ url_for('main.book_list') }}" class="btn btn-primary">去借阅图书</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 用户中心专用JavaScript -->
+<script>
+// 心愿单操作函数
+function addToWishlist(bookId, event) {
+    fetch(`/wishlist/add/${bookId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // 更新UI
+            const button = document.querySelector(`#wishlist-btn-${bookId}`);
+            if (button) {
+                button.innerHTML = '<i class="bi bi-heart-fill"></i> 已加入心愿单';
+                button.classList.remove('btn-outline-danger');
+                button.classList.add('btn-danger');
+                button.disabled = true;
+            }
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('操作失败');
+    });
+}
+
+// 移除心愿单函数
+function removeFromWishlist(bookId) {
+    if (!confirm('确定要从心愿单移除吗？')) return;
+
+    fetch(`/wishlist/remove/${bookId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('操作失败');
+    });
+}
+
+// 归还图书（简化的实现）
+function returnBook(borrowId) {
+    if (!confirm('确定要归还这本图书吗？')) return;
+
+    fetch(`/borrows/${borrowId}/return`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('操作失败');
+    });
+}
+
+// 续借图书（简化的实现）
+function renewBook(borrowId) {
+    if (!confirm('确定要续借这本图书吗？')) return;
+
+    fetch(`/borrows/${borrowId}/renew`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('操作失败');
+    });
+}
+</script>
+
+<style>
+.avatar-circle {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.info-box {
+    text-align: center;
+    padding: 10px;
+}
+
+.info-box-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.info-box-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+</style>
+{% endblock %}

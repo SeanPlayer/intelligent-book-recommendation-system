@@ -1,0 +1,119 @@
+<!-- admin/users.html -->
+{% extends "base_admin.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>用户管理</h2>
+</div>
+
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.manage_users') }}">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="搜索学号、姓名..." value="{{ search }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">搜索</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <select name="status" class="form-control">
+                        <option value="">全部状态</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>正常</option>
+                        <option value="frozen" {% if status_filter == 'frozen' %}selected{% endif %}>冻结</option>
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <!-- 其他筛选 -->
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 用户列表 -->
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>学号/工号</th>
+                <th>用户名</th>
+                <th>邮箱</th>
+                <th>专业</th>
+                <th>信誉分</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users.items %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.school_id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.major or '未设置' }}</td>
+                <td>
+                    <span class="badge {% if user.credit_score >= 120 %}bg-success{% elif user.credit_score >= 80 %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ user.credit_score }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge {% if user.account_status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ '正常' if user.account_status == 'active' else '冻结' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{{ url_for('admin.user_detail', user_id=user.id) }}"
+                           class="btn btn-outline-primary">详情</a>
+                        {% if user.account_status == 'active' %}
+                        <a href="{{ url_for('admin.toggle_user_status', user_id=user.id) }}"
+                           class="btn btn-outline-warning"
+                           onclick="return confirm('确定要冻结该用户吗？')">冻结</a>
+                        {% else %}
+                        <a href="{{ url_for('admin.toggle_user_status', user_id=user.id) }}"
+                           class="btn btn-outline-success"
+                           onclick="return confirm('确定要解冻该用户吗？')">解冻</a>
+                        {% endif %}
+                        <a href="{{ url_for('admin.reset_user_password', user_id=user.id) }}"
+                           class="btn btn-outline-info"
+                           onclick="return confirm('确定要重置该用户的密码吗？')">重置密码</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 分页 -->
+{% if users.pages > 1 %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if users.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.manage_users', page=users.prev_num, search=search, status=status_filter) }}">上一页</a>
+        </li>
+        {% endif %}
+
+        {% for page_num in users.iter_pages() %}
+        <li class="page-item {% if page_num == users.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.manage_users', page=page_num, search=search, status=status_filter, role=role_filter) }}">{{ page_num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if users.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.manage_users', page=users.next_num, search=search, status=status_filter, role=role_filter) }}">下一页</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

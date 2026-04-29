@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 form-container">
+        <h2>用户注册</h2>
+        <form method="POST" id="registerForm">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+                {{ form.school_id.label(class="form-label") }}
+                {{ form.school_id(class="form-control", placeholder="请输入学号或工号") }}
+                {% for error in form.school_id.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control", placeholder="请输入用户名") }}
+                {% for error in form.username.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control", placeholder="请输入邮箱地址") }}
+                {% for error in form.email.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.major.label(class="form-label") }}
+                {{ form.major(class="form-select", id="major") }}
+                {% for error in form.major.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3" id="other_major_div" style="display: none;">
+                {{ form.other_major.label(class="form-label") }}
+                {{ form.other_major(class="form-control", placeholder="请输入您的专业") }}
+                {% for error in form.other_major.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control", placeholder="至少6位密码") }}
+                {% for error in form.password.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.confirm_password.label(class="form-label") }}
+                {{ form.confirm_password(class="form-control", placeholder="请再次输入密码") }}
+                {% for error in form.confirm_password.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                {{ form.submit(class="btn btn-primary w-100") }}
+            </div>
+        </form>
+        <p class="text-center">已有账户？<a href="{{ url_for('auth.login') }}">点击登录</a></p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const majorSelect = document.getElementById('major');
+    const otherMajorDiv = document.getElementById('other_major_div');
+
+    function toggleOtherMajor() {
+        if (majorSelect.value === 'other') {
+            otherMajorDiv.style.display = 'block';
+        } else {
+            otherMajorDiv.style.display = 'none';
+        }
+    }
+
+    majorSelect.addEventListener('change', toggleOtherMajor);
+    toggleOtherMajor(); // 初始调用
+});
+</script>
+{% endblock %}
+
+
+
+
+
+

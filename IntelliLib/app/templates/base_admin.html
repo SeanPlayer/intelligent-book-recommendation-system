@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IntelliLib - 管理后台{% endblock %}</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-body">
+    <!-- 管理员专用导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark admin-navbar"> <!-- 新增 admin-navbar 类 -->
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('admin.manage_books') }}">
+                <i class="bi bi-gear"></i> IntelliLib 管理后台
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">管理员: {{ current_user.username }}</span>
+                <a class="nav-link" href="{{ url_for('main.index') }}">返回前台</a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">退出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- 管理员专用侧边栏 -->
+        <div class="row">
+            <div class="col-md-3 col-lg-2">
+                <div class="list-group">
+                    <a href="{{ url_for('admin.manage_books') }}"
+                       class="list-group-item list-group-item-action {% if request.endpoint == 'admin.manage_books' %}active{% endif %}">
+                        📚 图书管理
+                    </a>
+                    <a href="{{ url_for('admin.manage_users') }}"
+                       class="list-group-item list-group-item-action {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                        👥 用户管理
+                    </a>
+                    <a href="{{ url_for('admin.dashboard') }}"
+                       class="list-group-item list-group-item-action {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        📊 数据统计
+                    </a>
+                    <a href="{{ url_for('admin.recommendation_analytics') }}"
+                       class="list-group-item list-group-item-action {% if request.endpoint == 'admin.recommendation_analytics' %}active{% endif %}">
+                        🧠 推荐系统分析
+                    </a>
+                    <a href="{{ url_for('admin.credit_config') }}"
+                       class="list-group-item list-group-item-action {% if request.endpoint == 'admin.credit_config' %}active{% endif %}">
+                        ⚙️ 信誉分配置
+                    </a>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-9 col-lg-10">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block admin_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

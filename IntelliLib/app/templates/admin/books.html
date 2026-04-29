@@ -1,0 +1,117 @@
+{% extends "base_admin.html" %}
+
+{% block title %}图书管理 - IntelliLib{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>图书管理</h2>
+    <a href="{{ url_for('admin.add_book') }}" class="btn btn-primary">添加图书</a>
+</div>
+
+<!-- 管理员搜索功能 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin.manage_books') }}">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="搜索图书..." value="{{ search }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-outline-secondary w-100">搜索</button>
+                </div>
+            </div>
+            <!-- 筛选行 -->
+            <div class="row">
+                <div class="col-md-4">
+                    <select name="category" class="form-control">
+                        <option value="">全部分类</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="stock" class="form-control">
+                        <option value="">全部库存</option>
+                        <option value="available" {% if stock == 'available' %}selected{% endif %}>有库存</option>
+                        <option value="unavailable" {% if stock == 'unavailable' %}selected{% endif %}>无库存</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">应用筛选</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 图书列表 -->
+{% if books.items %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>书名</th>
+                <th>作者</th>
+                <th>ISBN</th>
+                <th>分类</th>
+                <th>库存</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 1. 遍历分页后的图书列表（books.items） -->
+            {% for book in books.items %}
+            <tr>
+                <td>{{ book.id }}</td>
+                <td>{{ book.title }}</td>
+                <td>{{ book.author }}</td>
+                <td>{{ book.isbn or '无' }}</td>
+                <td>{{ book.category }}</td>
+                <td>{{ book.available_copies }}/{{ book.total_copies }}</td>
+                <td>
+                    <a href="{{ url_for('admin.edit_book', book_id=book.id) }}"
+                       class="btn btn-sm btn-outline-primary">编辑</a>
+                    <a href="{{ url_for('admin.delete_book', book_id=book.id) }}"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('确定要操作这本图书吗？')">删除</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 2. 添加分页控件（参考用户管理界面，保留筛选参数） -->
+{% if books.pages > 1 %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if books.has_prev %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.manage_books', page=books.prev_num, search=search, category=category, stock=stock) }}">上一页</a>
+        </li>
+        {% endif %}
+
+        {% for page_num in books.iter_pages() %}
+        <li class="page-item {% if page_num == books.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.manage_books', page=page_num, search=search, category=category, stock=stock) }}">{{ page_num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if books.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{{ url_for('admin.manage_books', page=books.next_num, search=search, category=category, stock=stock) }}">下一页</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    暂无图书数据，请 <a href="{{ url_for('admin.add_book') }}">添加图书</a>。
+</div>
+{% endif %}
+{% endblock %}

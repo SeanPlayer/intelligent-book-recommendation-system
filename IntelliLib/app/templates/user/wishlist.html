@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-heart"></i> 我的心愿单</h2>
+        <a href="{{ url_for('main.book_list') }}" class="btn btn-outline-primary">
+            <i class="bi bi-plus"></i> 继续添加
+        </a>
+    </div>
+
+    {% if wishlist_items %}
+    <div class="row">
+        {% for book in wishlist_items %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image }}" class="card-img-top" alt="{{ book.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <span class="text-muted">暂无封面</span>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h6 class="card-title">{{ book.title }}</h6>
+                    <p class="card-text text-muted small">{{ book.author }}</p>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ book.category }}</span>
+                        <span class="badge {% if book.available_copies > 0 %}bg-success{% else %}bg-warning{% endif %} float-end">
+                            {% if book.available_copies > 0 %}
+                            有库存 ({{ book.available_copies }})
+                            {% else %}
+                            无库存
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text small">{{ book.description|truncate(80) if book.description else "暂无描述" }}</p>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.book_detail', book_id=book.id) }}"
+                           class="btn btn-primary">
+                            查看详情
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromWishlist({{ book.id }})">
+                            <i class="bi bi-trash"></i> 移除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-heart text-muted" style="font-size: 5rem;"></i>
+        </div>
+        <h4 class="text-muted mb-3">心愿单是空的</h4>
+        <p class="text-muted mb-4">将您感兴趣的图书加入心愿单，方便以后借阅</p>
+        <a href="{{ url_for('main.book_list') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-search"></i> 浏览图书
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// 移除心愿单函数
+function removeFromWishlist(bookId) {
+    if (!confirm('确定要从心愿单移除吗？')) return;
+    
+    fetch(`/wishlist/remove/${bookId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // 重新加载页面
+            window.location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('错误:', error);
+        alert('移除失败');
+    });
+}
+</script>
+{% endblock %}

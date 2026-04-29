@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 form-container">
+        <h2>编辑图书 - {{ book.title }}</h2>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.isbn.label(class="form-label") }}
+                        {{ form.isbn(class="form-control") }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.total_copies.label(class="form-label") }}
+                        {{ form.total_copies(class="form-control") }}
+                        <small class="form-text text-muted">
+                            当前库存: {{ book.total_copies }} | 可借: {{ book.available_copies }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 其他表单字段与add_book.html相同 -->
+            <div class="mb-3">
+                {{ form.title.label(class="form-label") }}
+                {{ form.title(class="form-control") }}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.author.label(class="form-label") }}
+                {{ form.author(class="form-control") }}
+            </div>
+            
+            <!-- 复制add_book.html的其他字段 -->
+            
+            <div class="mb-3">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('admin.manage_books') }}" class="btn btn-secondary">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

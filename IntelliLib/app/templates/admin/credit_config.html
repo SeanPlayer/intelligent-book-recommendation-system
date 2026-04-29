@@ -1,0 +1,114 @@
+{% extends "base_admin.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>信誉分系统配置</h2>
+    <a href="{{ url_for('admin.reset_credit_config') }}" class="btn btn-outline-warning" 
+       onclick="return confirm('确定要重置为默认配置吗？')">重置默认</a>
+</div>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>基础配置</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">初始信誉分</label>
+                        <input type="number" class="form-control" name="config_default_credit_score" 
+                               value="{{ configs.get('default_credit_score', '100') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">最高信誉分</label>
+                        <input type="number" class="form-control" name="config_max_credit_score" 
+                               value="{{ configs.get('max_credit_score', '200') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">最低信誉分</label>
+                        <input type="number" class="form-control" name="config_min_credit_score" 
+                               value="{{ configs.get('min_credit_score', '0') }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>借阅规则</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">基础借阅天数</label>
+                        <input type="number" class="form-control" name="config_borrow_period_days" 
+                               value="{{ configs.get('borrow_period_days', '30') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">续借增加天数</label>
+                        <input type="number" class="form-control" name="config_renew_period_days" 
+                               value="{{ configs.get('renew_period_days', '15') }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">最大续借次数</label>
+                        <input type="number" class="form-control" name="config_max_renew_count" 
+                               value="{{ configs.get('max_renew_count', '2') }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>奖惩规则</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">逾期扣分（每天）</label>
+                        <input type="number" class="form-control" name="config_overdue_penalty_per_day" 
+                               value="{{ configs.get('overdue_penalty_per_day', '1') }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">提前归还奖励</label>
+                        <input type="number" class="form-control" name="config_return_earlier_bonus" 
+                               value="{{ configs.get('return_earlier_bonus', '2') }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>信誉等级配置（JSON格式）</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">等级配置</label>
+                <textarea class="form-control" name="config_credit_levels" rows="10" 
+                          style="font-family: monospace;">{{ configs.get('credit_levels', '{}') }}</textarea>
+                <small class="form-text text-muted">
+                    配置示例：<br>
+                    {<br>
+                    &nbsp;&nbsp;"excellent": {"min": 150, "borrow_limit": 10, "borrow_days": 45},<br>
+                    &nbsp;&nbsp;"good": {"min": 120, "borrow_limit": 8, "borrow_days": 35},<br>
+                    &nbsp;&nbsp;"normal": {"min": 80, "borrow_limit": 5, "borrow_days": 30}<br>
+                    }
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary btn-lg">保存配置</button>
+        <a href="{{ url_for('admin.manage_books') }}" class="btn btn-secondary btn-lg">取消</a>
+    </div>
+</form>
+{% endblock %}

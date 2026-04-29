@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-stars"></i> 猜你喜欢</h2>
+            <p class="text-muted">这里是推荐页面，系统会根据您的兴趣推荐图书</p>
+        </div>
+    </div>
+
+    <!-- 推荐结果网格容器 -->
+    <div id="recommend-container" class="row"></div>
+
+    <!-- 加载更多指示器 -->
+    <div id="loading-more" class="text-center py-3" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+    </div>
+
+    <!-- 没有更多提示 -->
+    <div id="no-more" class="text-center py-3 text-muted" style="display: none;">
+        <p>没有更多图书了</p>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let loading = false;
+let hasMore = true;
+let container = document.getElementById('recommend-container');
+let loadingMore = document.getElementById('loading-more');
+let noMore = document.getElementById('no-more');
+
+// 加载一页
+function loadPage(page) {
+    if (loading) return;
+    loading = true;
+    loadingMore.style.display = 'block';
+
+    fetch(`/api/recommend/personalized/page?page=${page}&per_page=12`)
+        .then(res => res.json())
+        .then(data => {
+            loading = false;
+            loadingMore.style.display = 'none';
+
+            if (data.books.length === 0) {
+                hasMore = false;
+                if (page === 1) {
+                    // 第一页就无数据，显示空状态
+                    container.innerHTML = '<div class="col-12 text-center py-5"><div class="mb-4"><i class="bi bi-lightbulb" style="font-size: 4rem; color: #6c757d;"></i></div><h4 class="text-muted mb-3">暂无推荐图书</h4><p class="text-muted mb-4">系统中暂时没有可推荐的图书。</p><a href="{{ url_for('main.book_list') }}" class="btn btn-primary">浏览所有图书</a></div>';
+                } else {
+                    noMore.style.display = 'block';
+                }
+                return;
+            }
+
+            // 渲染图书卡片
+            data.books.forEach(book => {
+                let cardHtml = `
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="card h-100">
+                            ${book.cover_image ?
+                                `<img src="${book.cover_image}" class="card-img-top" alt="${book.title}" style="height: 200px; object-fit: cover;">` :
+                                `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;"><span class="text-muted">暂无封面</span></div>`
+                            }
+                            <div class="card-body">
+                                <h6 class="card-title">${book.title}</h6>
+                                <p class="card-text text-muted small">${book.author}</p>
+                                <div class="mb-2">
+                                    <span class="badge bg-secondary">${book.category_display || book.category || '未分类'}</span>
+                                    <span class="badge ${book.available_copies > 0 ? 'bg-success' : 'bg-warning'} float-end">
+                                        ${book.available_copies > 0 ? '可借' : '无库存'}
+                                    </span>
+                                </div>
+                                <p class="card-text small">${book.description ? book.description.substring(0, 80) + (book.description.length > 80 ? '...' : '') : '暂无描述'}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="/books/${book.id}" class="btn btn-primary btn-sm w-100">查看详情</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            currentPage++;
+            if (!data.has_more) {
+                hasMore = false;
+                if (data.books.length > 0) {
+                    noMore.style.display = 'block';
+                }
+            }
+        })
+        .catch(err => {
+            console.error('加载推荐失败:', err);
+            loading = false;
+            loadingMore.style.display = 'none';
+        });
+}
+
+// 监听滚动
+window.addEventListener('scroll', () => {
+    if (!hasMore || loading) return;
+    const scrollY = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    if (scrollY + windowHeight >= documentHeight - 200) {
+        loadPage(currentPage);
+    }
+});
+
+// 初始化第一页
+loadPage(1);
+</script>
+{% endblock %}

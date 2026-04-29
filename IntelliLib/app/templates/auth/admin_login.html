@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-dark text-white text-center py-3">
+                <h4 class="mb-0">管理员登录</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.admin_id.label(class="form-label") }}
+                        {{ form.admin_id(class="form-control", placeholder="管理员账号") }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control", placeholder="密码") }}
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        {{ form.submit(class="btn btn-dark") }}
+                    </div>
+                </form>
+
+                <div class="text-center">
+                    <a href="{{ url_for('auth.login') }}" class="text-muted">← 返回用户登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
